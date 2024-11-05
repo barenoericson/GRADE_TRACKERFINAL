@@ -1,73 +1,64 @@
 package gradetrackersample;
 
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Teachers {
+    private config conf;
 
-    public void addStudents() {
+    public Teachers() {
+        conf = new config();
+    }
+
+    public void displayTeacherMenu() {
         Scanner sc = new Scanner(System.in);
-        config conf = new config();
-        AddStudents as = new AddStudents();
-        ViewStudents vs = new ViewStudents();
-        UpdateStudents us = new UpdateStudents();
-        DeleteStudents ds = new DeleteStudents();
-        int action;
+        AddStudents addstudents = new AddStudents();
+        ViewReports viewReports = new ViewReports();
+        UpdateStudents updatestudents = new UpdateStudents();
+        DeleteStudents deletestudents = new DeleteStudents();
 
-        do {
-            System.out.println("----------------------------------");
-            System.out.println("CHOICES");
-            System.out.println("----------------------------------");
+        boolean teacherRunning = true;
+
+        while (teacherRunning) {
+            System.out.println("\n-- TEACHER MENU --");
             System.out.println("1. Add Student's Information");
             System.out.println("2. View Students Information");
             System.out.println("3. Update Students Information");
             System.out.println("4. Delete Students Information");
-            System.out.println("5. Exit");
-            System.out.println("----------------------------------");
+            System.out.println("5. Exit to Teacher's Menu");
+            System.out.print("Please Select an Option: ");
 
-            System.out.print("Enter Action: ");
+            if (sc.hasNextInt()) {
+                int option = sc.nextInt();
+                sc.nextLine(); // Clear the buffer
 
-            
-            while (!sc.hasNextInt()) {
-                System.out.println("Invalid input. Please enter a valid integer action.");
+                switch (option) {
+                    case 1:
+                        addstudents.addStudent();
+                        break;
+                    case 2:
+                        viewReports.displayReports();
+                        break;
+                    case 3:
+                        viewReports.displayReports();
+                        updatestudents.updateStudent(); 
+                        viewReports.displayReports();
+                        break; 
+                    case 4:
+                        deletestudents.deleteStudent();
+                        break;
+                    case 5:
+                        teacherRunning = false; 
+                        break;
+                    default:
+                        System.out.println("Invalid option. Please try again.");
+                        break;
+                }
+            } else {
+                System.out.println("Invalid input. Please enter a numeric option.");
                 sc.next(); 
             }
+        }
 
-            action = sc.nextInt();
-
-            
-            switch (action) {
-                case 1:
-                    as.addStudent();
-                    break;
-                case 2:
-                    vs.getView();
-                    break;
-                case 3:
-                    us.updateStudent();
-                    break;
-                case 4:
-                    ds.deleteStudent();
-                    break;
-                case 5:
-                    System.out.println("Exiting the program. Goodbye!");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please select a number between 1 and 5.");
-                    continue; 
-            }
-
-            System.out.print("Do you want to perform another transaction? (yes/no): ");
-            String confirm = sc.next().trim().toLowerCase();
-            while (!confirm.equals("yes") && !confirm.equals("no")) {
-                System.out.print("Invalid input. Please enter 'yes' or 'no': ");
-                confirm = sc.next().trim().toLowerCase();
-            }
-
-            if (confirm.equals("no")) {
-                action = 5; 
-            }
-
-        } while (action != 5); 
+        sc.close(); // Close scanner when menu loop ends
     }
 }

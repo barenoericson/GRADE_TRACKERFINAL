@@ -1,63 +1,69 @@
 package gradetrackersample;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class DeleteStudents {
+
+    private config conf;
+
+    public DeleteStudents() {
+        conf = new config();
+    }
+
     public void deleteStudent() {
         Scanner sc = new Scanner(System.in);
-        config conf = new config();
-        int id = -1;
-        boolean validInput = false;
 
-        
-        while (!validInput) {
+        System.out.print("Would you like to delete a specific student or all students? (Enter 'specific' or 'all'): ");
+        String choice = sc.nextLine().trim().toLowerCase();
+
+        if (choice.equals("all")) {
+            confirmDeleteAll(sc);
+        } else if (choice.equals("specific")) {
+            int studentId = getValidatedID(sc);
+            String checkSql = "SELECT sid FROM tbl_report WHERE sid = ?";
+            if (!conf.recordExists(checkSql, studentId)) {
+                System.out.println("No student found with ID: " + studentId);
+                return; 
+            }
+
+            String sql = "DELETE FROM tbl_report WHERE sid = ?"; 
+            conf.deleteRecord(sql, studentId);
+            System.out.println("Student record deleted successfully.");
+        } else {
+            System.out.println("Invalid option. Please choose 'specific' or 'all'.");
+        }
+    }
+
+    private void confirmDeleteAll(Scanner sc) {
+        System.out.print("Are you sure you want to delete all student records? This action cannot be undone. (yes/no): ");
+        String confirmation = sc.nextLine().trim().toLowerCase();
+
+        if (confirmation.equals("yes")) {
+            String sql = "DELETE FROM tbl_report"; 
+            conf.deleteRecord(sql); 
+            System.out.println("All student records deleted successfully.");
+        } else {
+            System.out.println("Deletion of all records cancelled.");
+        }
+    }
+
+    private int getValidatedID(Scanner sc) {
+        int id;
+
+        while (true) {
             System.out.print("Enter Student ID to delete: ");
             if (sc.hasNextInt()) {
                 id = sc.nextInt();
-                validInput = true; 
-            } else {
-                System.out.println("Invalid input. Please enter a valid integer ID.");
-                sc.next(); 
-            }
-        }
+                sc.nextLine(); 
 
-        String checkSql = "SELECT * FROM tbl_report WHERE id = ?";
-        ResultSet rs = conf.executeQuery(checkSql, id);
-
-        try {
-           
-            if (rs == null || !rs.next()) {
-                System.out.println("No student found with ID: " + id);
-            } else {
-               
-                System.out.println("Student found:");
-                System.out.println("ID: " + rs.getInt("id"));
-                System.out.println("First Name: " + rs.getString("s_fname"));
-                System.out.println("Last Name: " + rs.getString("s_lname"));
-                System.out.println("Email: " + rs.getString("s_email"));
-                System.out.println("Course: " + rs.getString("s_course"));
-
-                System.out.print("Are you sure you want to delete this student? (yes/no): ");
-                String confirm = sc.next();
-                if (confirm.equalsIgnoreCase("yes")) {
-                    String deleteSql = "DELETE FROM tbl_report WHERE id = ?";
-                    conf.deleteRecord(deleteSql, id);
-                    System.out.println("Student deleted successfully.");
+                if (id <= 0) {
+                    System.out.println("ID must be a positive integer. Please try again.");
                 } else {
-                    System.out.println("Deletion cancelled.");
+                    return id; 
                 }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error while trying to delete student: " + e.getMessage());
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close(); 
-                }
-            } catch (SQLException e) {
-                System.out.println("Error closing ResultSet: " + e.getMessage());
+            } else {
+                System.out.println("Invalid input. Please enter a numeric ID.");
+                sc.next(); 
             }
         }
     }

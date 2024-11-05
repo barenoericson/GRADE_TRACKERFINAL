@@ -1,117 +1,119 @@
-
 package gradetrackersample;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Scanner;
-
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 
 public class UpdateStudents {
-    
+
     public void updateStudent() {
-        Scanner sc = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
         config conf = new config();
 
-      
-    int id = -1;
-    boolean validId = false;
+        boolean updating = true; 
 
-    while (!validId) {
-        System.out.print("Enter Student ID to update: ");
-        if (sc.hasNextInt()) {
-            id = sc.nextInt();
-            sc.nextLine(); 
-            String checkSql = "SELECT * FROM tbl_report WHERE id = ?";
-            ResultSet rs = conf.executeQuery(checkSql, id);
+        while (updating) {
+            try {
+                int id = getValidStudentId(scanner); 
+                String fname = getValidString(scanner, "New Student's First Name: ");
+                String lname = getValidString(scanner, "New Student's Last Name: ");
+                String email = getValidEmail(scanner);
+                String course = getValidString(scanner, "New Student's Course: ");
+                double pg = getValidGrade(scanner, "New PRELIM GRADE: ");
+                double mg = getValidGrade(scanner, "New MIDTERM GRADE: ");
+                double pfg = getValidGrade(scanner, "New PREFINAL GRADE: ");
+                double fg = getValidGrade(scanner, "New FINAL GRADE: ");
 
-        try {
-            
-            if (rs != null && rs.next()) {
-                validId = true; 
-            } else {
-                System.out.println("No student found with ID: " + id);
+                double average = (pg + mg + pfg + fg) / 4;
+                System.out.printf("Calculated Average: %.2f%n", average);
+
+                String status = (average >= 1.0 && average <= 3.0) ? "Passed" : "Failed";
+                System.out.println("Status: " + status);
+                
+                String qry = "UPDATE tbl_report SET s_fname = ?, s_lname = ?, s_email = ?, "
+                           + "s_course = ?, PRELIM_GRADE = ?, MIDTERM_GRADE = ?, "
+                           + "PREFINAL_GRADE = ?, FINAL_GRADE = ?, AVERAGE = ?, STATUS = ? WHERE sid = ?";
+
+                conf.updateRecord(qry, fname, lname, email, course, pg, mg, pfg, fg, average, status, id);
+                System.out.println("Student record updated successfully.");
+                
+            } catch (SQLException e) {
+                System.out.println("Error updating student record: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            System.out.println("Error while checking student ID: " + e.getMessage());
+
+            System.out.print("Do you want to update another student's information? (yes/no): ");
+            String response = scanner.nextLine().trim().toLowerCase();
+            updating = response.equals("yes"); 
         }
-    } else {
-        System.out.println("Invalid input. Please enter a valid integer ID.");
-        sc.next(); 
-    }
-}
 
-
-        try {
-           
-            String checkSql = "SELECT * FROM tbl_report WHERE id = ?";
-            ResultSet rs = conf.executeQuery(checkSql, id);
-            rs.next(); 
-
-            System.out.println("-- ENTER NEW STUDENT DETAILS --");
-
-            String fname = getInput(sc, "Student First Name: ", false);
-            String lname = getInput(sc, "Student Last Name: ", false);
-            String email = getInput(sc, "Student Email: ", true);
-            String course = getInput(sc, "Course: ", false);
-            double pg = getGradeInput(sc, "Prelim Grade: ");
-            double mg = getGradeInput(sc, "Midterm Grade: ");
-            double pfg = getGradeInput(sc, "Prefinal Grade: ");
-            double fg = getGradeInput(sc, "Final Grade: ");
-
-            double average = (pg + mg + pfg + fg) / 4;
-            System.out.println("Average: " + average);
-
-            String status = getInput(sc, "Student Status: ", false);
-
-            String updateSql = "UPDATE tbl_report SET s_fname = ?, s_lname = ?, s_email = ?, s_course = ?, PRELIM_GRADE = ?, MIDTERM_GRADE = ?, PREFINAL_GRADE = ?, FINAL_GRADE = ?, AVERAGE = ?, STATUS = ? WHERE id = ?";
-            
-            
-            conf.updateRecord(updateSql, fname, lname, email, course, pg, mg, pfg, fg, average, status, id);
-            System.out.println("Student information updated successfully.");
-        } catch (SQLException e) {
-            System.out.println("Error while updating student information: " + e.getMessage());
-        }
+        scanner.close();
     }
 
-  
-    private String getInput(Scanner sc, String prompt, boolean isEmail) {
-        String input = "";
-        boolean validInput = false;
-        while (!validInput) {
-            System.out.print(prompt);
-            input = sc.nextLine().trim();
-            if (isEmail && !input.contains("@")) {
-                System.out.println("Invalid email format. Please enter a valid email.");
-            } else if (input.isEmpty()) {
-                System.out.println("Input cannot be empty. Please enter a valid value.");
-            } else {
-                validInput = true;
-            }
-        }
-        return input;
-    }
-
-    
-    private double getGradeInput(Scanner sc, String prompt) {
-        double grade = -1;
-        boolean validGrade = false;
-        while (!validGrade) {
-            System.out.print(prompt);
-            if (sc.hasNextDouble()) {
-                grade = sc.nextDouble();
-                if (grade < 0 || grade > 100) {
-                    System.out.println("Grade must be between 0 and 100. Please enter a valid grade.");
+    private int getValidStudentId(Scanner scanner) {
+        int id;
+        while (true) {
+            System.out.print("Enter Student's Id to Update: ");
+            if (scanner.hasNextInt()) {
+                id = scanner.nextInt();
+                scanner.nextLine(); 
+                if (id > 0) {
+                    break; 
                 } else {
-                    validGrade = true;
+                    System.out.println("ID must be a positive integer.");
                 }
             } else {
-                System.out.println("Invalid input. Please enter a valid grade.");
-                sc.next(); 
+                System.out.println("Invalid input. Please enter a numeric ID.");
+                scanner.next(); 
             }
         }
-        return grade;
+        return id;
+    }
+
+    private String getValidString(Scanner scanner, String prompt) {
+        String input;
+        while (true) {
+            System.out.print(prompt);
+            input = scanner.nextLine().trim();
+            if (!input.isEmpty()) {
+                return input; 
+            } else {
+                System.out.println("Input cannot be empty. Please try again.");
+            }
+        }
+    }
+
+    private String getValidEmail(Scanner scanner) {
+        String email;
+        while (true) {
+            System.out.print("New Student's Email: ");
+            email = scanner.nextLine().trim();
+            if (isValidEmail(email)) {
+                return email; 
+            } else {
+                System.out.println("Invalid email format. Please enter a valid email address.");
+            }
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.matches("^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    private double getValidGrade(Scanner scanner, String prompt) {
+        double grade;
+        while (true) {
+            System.out.print(prompt);
+            if (scanner.hasNextDouble()) {
+                grade = scanner.nextDouble();
+                scanner.nextLine(); 
+                if (grade >= 1.0 && grade <= 5.0) {
+                    return grade; 
+                } else {
+                    System.out.println("Grade must be between 1.0 and 5.0. Please try again.");
+                }
+            } else {
+                System.out.println("Invalid input. Please enter a numeric grade.");
+                scanner.next();
+            }
+        }
     }
 }
